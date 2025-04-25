@@ -1,10 +1,9 @@
-﻿using BasicApplication.DTOs;
-using BasicApplication.Models;
-namespace BasicApplication.Services
+using StudentManagement.DTOs;
+
+namespace StudentManagement.Services
 {
     public interface IAuthService
     {
-        Task<AuthResponseDTO> LoginAsysnc(LoginDTO loginDTO);
-        string GenerateJwtToken(User user);
+        Task<LoginResponse> LoginAsync(LoginRequest request);
     }
-}
+} 

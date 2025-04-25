@@ -1,12 +1,11 @@
-﻿using BasicApplication.DTOs;
-using BasicApplication.Models;
+using StudentManagement.DTOs;
 
-namespace BasicApplication.Services
+namespace StudentManagement.Services
 {
     public interface IStudentService
     {
-        Task<IEnumerable<StudentDTO>> GetAllStudentsAsync();
-        Task<StudentDTO> CreateStudentAsync(CreateStudentDTO createStudentDTO);
-        Task<bool> AssignCoursesToStudentAsync(int studentId, AssignCoursesDTO assignCourseDTO);
+        Task<StudentResponse> CreateStudentAsync(CreateStudentRequest request);
+        Task AssignCoursesAsync(int studentId, AssignCoursesRequest request);
+        Task<List<StudentResponse>> GetAllStudentsAsync();
     }
-}
+} 

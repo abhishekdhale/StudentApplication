@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BasicApplication.DTOs;
-using BasicApplication.Services;
+using Microsoft.AspNetCore.Mvc;
+using StudentManagement.DTOs;
+using StudentManagement.Services;
 
-namespace BasicApplication.Controllers
+namespace StudentManagement.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -16,21 +16,21 @@ namespace BasicApplication.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             try
             {
-                var response = await _authService.LoginAsysnc(loginDTO);
+                var response = await _authService.LoginAsync(request);
                 return Ok(response);
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                return StatusCode(500, "An error occurred while processing your request");
             }
         }
     }
-}
+} 

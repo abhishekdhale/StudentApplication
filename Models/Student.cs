@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
-namespace BasicApplication.Models
+namespace StudentManagement.Models
 {
     public class Student
     {
@@ -12,14 +12,13 @@ namespace BasicApplication.Models
 
         [Required]
         [EmailAddress]
-        public string Email;
+        [StringLength(100)]
+        public string Email { get; set; }
 
         [Required]
         [StringLength(20)]
-        public string Phone {  get; set; }
-
-        public DateTime createdAt { get; set; } = DateTime.UtcNow;
+        public string Phone { get; set; }
 
         public ICollection<StudentCourse> StudentCourses { get; set; }
     }
-}
+} 

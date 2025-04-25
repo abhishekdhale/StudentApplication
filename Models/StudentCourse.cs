@@ -1,4 +1,4 @@
-﻿namespace BasicApplication.Models
+namespace StudentManagement.Models
 {
     public class StudentCourse
     {
@@ -7,7 +7,5 @@
 
         public int CourseId { get; set; }
         public Course Course { get; set; }
-
-        public DateTime EnrolledAt { get; set; }= DateTime.UtcNow;
     }
-}
+} 

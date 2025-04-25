@@ -1,65 +1,54 @@
-﻿using BasicApplication.Data;
-using BasicApplication.DTOs;
-using BasicApplication.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StudentManagement.DTOs;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace BasicApplication.Services
+namespace StudentManagement.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthService(ApplicationDbContext context, IConfiguration configuration)
+        public AuthService(IConfiguration configuration)
         {
-            _context = context;
             _configuration = configuration;
         }
 
-        public async Task<AuthResponseDTO> LoginAsysnc(LoginDTO loginDTO)
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == loginDTO.Username);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDTO.Password, user.PasswordHash))
+            // In a real application, you would validate against a user database
+            // For this example, we'll use a hardcoded admin user
+            if (request.Username != "admin" || request.Password != "admin123")
             {
                 throw new UnauthorizedAccessException("Invalid username or password");
             }
 
-            var token = GenerateJwtToken(user);
-            return new AuthResponseDTO
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:SecretKey"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Token = token,
-                ExpiresAt = DateTime.UtcNow.AddHours(1)
-            };
-        }
-
-        public string GenerateJwtToken(User user)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.Name, request.Username),
+                    new Claim(ClaimTypes.Role, "Admin")
+                }),
+                Expires = DateTime.UtcNow.AddMinutes(
+                    Convert.ToDouble(_configuration["JwtSettings:ExpiryInMinutes"])),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _configuration["JwtSettings:Issuer"],
+                Audience = _configuration["JwtSettings:Audience"]
             };
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: credentials
-            );
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new LoginResponse
+            {
+                Token = tokenString,
+                Expiration = tokenDescriptor.Expires.Value
+            };
         }
-
-       
     }
-}
+} 

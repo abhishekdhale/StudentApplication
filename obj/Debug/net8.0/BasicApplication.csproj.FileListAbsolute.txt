@@ -168,3 +168,4 @@ C:\Users\Abhishek\source\repos\BasicApplication\BasicApplication\bin\Debug\net8.
 C:\Users\Abhishek\source\repos\BasicApplication\BasicApplication\obj\Debug\net8.0\BasicApplication.csproj.AssemblyReference.cache
 C:\Users\Abhishek\source\repos\BasicApplication\BasicApplication\obj\Debug\net8.0\BasicApp.F2E228B5.Up2Date
 C:\Users\Abhishek\source\repos\BasicApplication\BasicApplication\bin\Debug\net8.0\System.Formats.Asn1.dll
+C:\Users\Abhishek\source\repos\BasicApplication\BasicApplication\obj\Debug\net8.0\BasicApplication.sourcelink.json

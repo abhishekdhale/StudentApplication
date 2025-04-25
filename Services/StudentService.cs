@@ -1,9 +1,9 @@
-﻿using BasicApplication.Data;
-using BasicApplication.DTOs;
-using BasicApplication.Models;
 using Microsoft.EntityFrameworkCore;
+using StudentManagement.Data;
+using StudentManagement.DTOs;
+using StudentManagement.Models;
 
-namespace BasicApplication.Services
+namespace StudentManagement.Services
 {
     public class StudentService : IStudentService
     {
@@ -14,49 +14,29 @@ namespace BasicApplication.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<StudentDTO>> GetAllStudentsAsync()
+        public async Task<StudentResponse> CreateStudentAsync(CreateStudentRequest request)
         {
-            return await _context.Students
-                .Include(s => s.StudentCourses)
-                .ThenInclude(sc => sc.Course)
-                .Select(s => new StudentDTO
-                {
-                    Id = s.Id,
-                    Name = s.Name,
-                    Email = s.Email,
-                    Phone = s.Phone,
-                    Courses = string.Join(", ", s.StudentCourses.Select(sc => sc.Course.Name))
-                })
-                .ToListAsync();
-        }
-
-        public async Task<StudentDTO> CreateStudentAsync(CreateStudentDTO createStudentDTO)
-        {
-            if (await _context.Students.AnyAsync(s => s.Email == createStudentDTO.Email))
-            {
-                throw new InvalidOperationException("Email already exists");
-            }
-
             var student = new Student
             {
-                Name = createStudentDTO.Name,
-                Email = createStudentDTO.Email,
-                Phone = createStudentDTO.Phone
+                Name = request.Name,
+                Email = request.Email,
+                Phone = request.Phone
             };
 
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
-            return new StudentDTO
+            return new StudentResponse
             {
                 Id = student.Id,
                 Name = student.Name,
                 Email = student.Email,
-                Phone = student.Phone
+                Phone = student.Phone,
+                Courses = string.Empty
             };
         }
 
-        public async Task<bool> AssignCoursesToStudentAsync(int studentId, AssignCoursesDTO assignCourseDTO)
+        public async Task AssignCoursesAsync(int studentId, AssignCoursesRequest request)
         {
             var student = await _context.Students
                 .Include(s => s.StudentCourses)
@@ -64,39 +44,45 @@ namespace BasicApplication.Services
 
             if (student == null)
             {
-                throw new KeyNotFoundException("Student not found");
+                throw new KeyNotFoundException($"Student with ID {studentId} not found");
             }
 
             var existingCourseIds = student.StudentCourses.Select(sc => sc.CourseId).ToList();
-            var newCourseIds = assignCourseDTO.CourseIds.Except(existingCourseIds).ToList();
+            var newCourseIds = request.CourseIds.Except(existingCourseIds).ToList();
 
-            if (!newCourseIds.Any())
+            foreach (var courseId in newCourseIds)
             {
-                throw new InvalidOperationException("No new courses to assign");
-            }
+                var course = await _context.Courses.FindAsync(courseId);
+                if (course == null)
+                {
+                    throw new KeyNotFoundException($"Course with ID {courseId} not found");
+                }
 
-            var courses = await _context.Courses
-                .Where(c => newCourseIds.Contains(c.Id))
-                .ToListAsync();
-
-            if (courses.Count != newCourseIds.Count)
-            {
-                throw new KeyNotFoundException("One or more courses not found");
-            }
-
-            foreach (var course in courses)
-            {
                 student.StudentCourses.Add(new StudentCourse
                 {
-                    CourseId = course.Id,
-                    StudentId = student.Id
+                    StudentId = studentId,
+                    CourseId = courseId
                 });
             }
 
             await _context.SaveChangesAsync();
-            return true;
         }
 
-       
+        public async Task<List<StudentResponse>> GetAllStudentsAsync()
+        {
+            var students = await _context.Students
+                .Include(s => s.StudentCourses)
+                .ThenInclude(sc => sc.Course)
+                .ToListAsync();
+
+            return students.Select(s => new StudentResponse
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Email = s.Email,
+                Phone = s.Phone,
+                Courses = string.Join(", ", s.StudentCourses.Select(sc => sc.Course.Name))
+            }).ToList();
+        }
     }
-}
+} 
